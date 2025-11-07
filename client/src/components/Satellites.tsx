@@ -2,10 +2,11 @@ import { useRef, useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import * as satellite from 'satellite.js';
-import { useSatelliteStore, type SatelliteInfo } from '@/lib/stores/useSatelliteStore';
+import { useSatelliteStore, type SatelliteInfo, type SatellitePosition } from '@/lib/stores/useSatelliteStore';
 import { EARTH_RADIUS } from './Earth';
 
 const SCALE_FACTOR = 1 / 1000;
+const ZUSTAND_UPDATE_INTERVAL = 60;
 
 interface SatelliteData {
   satrec: satellite.SatRec;
@@ -13,10 +14,23 @@ interface SatelliteData {
   trail: THREE.Vector3[];
 }
 
+interface LocalPositionBuffer {
+  x: number;
+  y: number;
+  z: number;
+  lat: number;
+  lon: number;
+  alt: number;
+  velocity: number;
+}
+
 export function Satellites() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const { satellites, currentTime, setSatellitePosition, selectedSatellite, setSelectedSatellite, hoveredSatellite, setHoveredSatellite } = useSatelliteStore();
+  const { satellites, currentTime, setSatellitePosition, selectedSatellite, setSelectedSatellite, hoveredSatellite, setHoveredSatellite, followedSatellite, setRealtimePositionGetter } = useSatelliteStore();
   const { camera, raycaster, pointer } = useThree();
+  
+  const localPositionBuffer = useRef<Map<string, LocalPositionBuffer>>(new Map());
+  const frameCounter = useRef(0);
   
   const satelliteData = useMemo<SatelliteData[]>(() => {
     return satellites.map(sat => {
@@ -38,6 +52,14 @@ export function Satellites() {
   const tempColor = useMemo(() => new THREE.Color(), []);
   
   useEffect(() => {
+    setRealtimePositionGetter(() => localPositionBuffer.current);
+    
+    return () => {
+      setRealtimePositionGetter(null);
+    };
+  }, [setRealtimePositionGetter]);
+  
+  useEffect(() => {
     if (meshRef.current && satelliteData.length > 0) {
       meshRef.current.count = satelliteData.length;
     }
@@ -47,6 +69,9 @@ export function Satellites() {
     if (!meshRef.current || satelliteData.length === 0) return;
     
     const time = currentTime;
+    frameCounter.current++;
+    
+    const shouldUpdateZustand = frameCounter.current % ZUSTAND_UPDATE_INTERVAL === 0;
     
     satelliteData.forEach((satData, index) => {
       try {
@@ -114,7 +139,7 @@ export function Satellites() {
               velocityEci.z * velocityEci.z
             );
             
-            setSatellitePosition(satData.info.noradId, {
+            localPositionBuffer.current.set(satData.info.noradId, {
               x, y, z,
               lat: lat * (180 / Math.PI),
               lon: lon * (180 / Math.PI),
@@ -131,6 +156,12 @@ export function Satellites() {
     meshRef.current.instanceMatrix.needsUpdate = true;
     if (meshRef.current.instanceColor) {
       meshRef.current.instanceColor.needsUpdate = true;
+    }
+    
+    if (shouldUpdateZustand) {
+      localPositionBuffer.current.forEach((position, noradId) => {
+        setSatellitePosition(noradId, position);
+      });
     }
   });
   

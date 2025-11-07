@@ -7,7 +7,8 @@ import { useSatelliteStore } from '@/lib/stores/useSatelliteStore';
 export function CameraController() {
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
-  const { followedSatellite, satellitePositions } = useSatelliteStore();
+  const followedSatellite = useSatelliteStore((state) => state.followedSatellite);
+  const getRealtimePosition = useSatelliteStore((state) => state.getRealtimePosition);
   
   const targetPosition = useRef(new THREE.Vector3(0, 0, 0));
   const currentCameraOffset = useRef(new THREE.Vector3(0, 5, 15));
@@ -26,7 +27,7 @@ export function CameraController() {
     if (!controlsRef.current) return;
     
     if (followedSatellite) {
-      const satPos = satellitePositions.get(followedSatellite);
+      const satPos = getRealtimePosition(followedSatellite);
       
       if (satPos) {
         targetPosition.current.set(satPos.x, satPos.y, satPos.z);

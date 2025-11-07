@@ -40,6 +40,8 @@ interface SatelliteStore {
   showLabels: boolean;
   trailLength: number;
   
+  realtimePositionGetter: (() => Map<string, SatellitePosition>) | null;
+  
   setSatellites: (satellites: SatelliteInfo[]) => void;
   setSatellitePosition: (noradId: string, position: SatellitePosition) => void;
   setSelectedSatellite: (noradId: string | null) => void;
@@ -58,6 +60,9 @@ interface SatelliteStore {
   toggleTrails: () => void;
   toggleLabels: () => void;
   setTrailLength: (length: number) => void;
+  
+  setRealtimePositionGetter: (getter: (() => Map<string, SatellitePosition>) | null) => void;
+  getRealtimePosition: (noradId: string) => SatellitePosition | null;
   
   getFilteredSatellites: () => SatelliteInfo[];
 }
@@ -81,6 +86,8 @@ export const useSatelliteStore = create<SatelliteStore>()(
     showTrails: true,
     showLabels: false,
     trailLength: 100,
+    
+    realtimePositionGetter: null,
     
     setSatellites: (satellites) => set({ satellites }),
     
@@ -106,6 +113,17 @@ export const useSatelliteStore = create<SatelliteStore>()(
     toggleTrails: () => set((state) => ({ showTrails: !state.showTrails })),
     toggleLabels: () => set((state) => ({ showLabels: !state.showLabels })),
     setTrailLength: (length) => set({ trailLength: length }),
+    
+    setRealtimePositionGetter: (getter) => set({ realtimePositionGetter: getter }),
+    
+    getRealtimePosition: (noradId) => {
+      const state = get();
+      if (state.realtimePositionGetter) {
+        const realtimePositions = state.realtimePositionGetter();
+        return realtimePositions.get(noradId) || null;
+      }
+      return state.satellitePositions.get(noradId) || null;
+    },
     
     getFilteredSatellites: () => {
       const state = get();
