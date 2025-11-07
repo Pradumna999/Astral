@@ -1,0 +1,100 @@
+
+# Project Title
+
+**Orbital Atlas — Real‑time, ultra‑realistic Earth + Satellite Simulation (Three.js)**
+
+## Short Summary
+
+Build a highly realistic, interactive 3D Earth simulation (Three.js) with live satellite positions, orbital trajectories, pass predictions, and NASA‑style mission info. Think *satellitemap.space* + *Google Earth* vibes — but lightweight, web-first, and developer-friendly on Replit.
+
+## Goals / MVP
+
+1. Render a photoreal Earth (day/night, clouds, atmosphere scattering, specular ocean) using Three.js.
+2. Show hundreds to thousands of satellites in real time (positions updated every few seconds) with smooth orbital trails.
+3. Client-side orbital propagation using TLE data so updates feel instant and scale is efficient.
+4. Selection UI: click a satellite → show a NASA-like info card (name, operator, mission, launch date, orbit params, next pass, footprint).
+5. Controls: time scrubber (play/pause/real-time/fast-forward), filter by object type/operator/orbit, search, and follow/center-on-satellite.
+6. Server component (optional but recommended): fetch and cache TLEs periodically from public sources, provide a WebSocket or REST API for clients.
+7. Clean, responsive UI with map and list views; lightweight performance on desktop and mobile.
+
+
+
+
+## Key Features (detailed)
+
+### Visual & Globe
+
+* Physically plausible atmosphere shader (horizon glow, Rayleigh/Mie scattering).
+* Day/night texture blending + city lights at night.
+* High-res cloud layer with subtle parallax.
+* Adjustable lighting (sun position by real UTC / simulated time).
+
+### Satellites & Orbits
+
+* Client-side propagation using `satellite.js` from latest TLEs.
+* Smooth orbital trails rendered with GPU instancing or dynamic line segments.
+* Footprint visualization (coverage circle) and ground track.
+* Elevation / altitude heat visualization (optional).
+
+### Interaction / Controls
+
+* Click/select satellites → info panel (mission summary, NORAD ID, operator, launch date, orbital elements, current velocity/altitude, predicted passes).
+* Search & filter (name, NORAD id, operator, orbital regime (LEO/GEO/SSO/etc.), constellation).
+* Follow mode: camera locks to satellite with contextual HUD.
+* Time controls: realtime sync, pause, step, speed multiplier, jump to pass time.
+* Notification panel for upcoming passes / possible conjunctions (UI only; no automatic interference).
+
+### Backend & Realtime
+
+* Scheduled TLE fetcher (e.g., every 6–12 hours) with caching and rate-limit handling.
+* WebSocket endpoint for pushing TLE update notifications and optional per-satellite telemetry.
+* REST endpoints for historical queries or bulk data download (JSON).
+
+## Performance & Scalability Notes
+
+* Use GPU instancing if gpu is available for thousands of point/sprite satellites.
+* Downsample trail history for long trails; LOD based on camera distance.
+* Propagate positions client-side per-frame (satellite.js) to avoid server compute load.
+* Throttle websocket updates — clients can update locally between server pushes.
+
+## UX / UI Ideas
+
+* Left panel: searchable list (group by operator/constellation), quick-follow buttons.
+* Right panel: selected satellite details and links to external resources (CelesTrak, N2YO, Wikipedia, NASA).
+* Overlay toggles: labels, ground tracks, footprints, orbital plane vectors.
+* Mini map 2D projection for bird’s-eye quick navigation.
+
+## Security & Ethics
+
+* Respect rate limits and API terms (Space-Track requires credentials).
+* Display clear attribution for data sources (CelesTrak/NASA/Open APIs).
+* No functionality for active interference or anything that would facilitate wrongdoing; keep features informational.
+
+## UI/UX Acceptance Criteria
+
+* Earth renders at >30 FPS on modern desktop; graceful degrade on mobile.
+* Selecting a satellite opens a details card with correctly propagated real-time position (within expected TLE propagation error).
+* Time scrubber controls propagate through the scene and update satellite positions instantly.
+* WebSocket or REST integration demonstrates live TLE refresh without page reload.
+
+## Nice-to-Have / Future Enhancements
+
+* Terrain elevation (DEM) and 3D buildings (Cesium-level detail — optional).
+* Ground-station network simulation and pass predictions with visibility windows.
+* Export snapshot (PNG) and small shareable URL to focus on a satellite/time.
+* Conjunction analysis tools and batch alerts (experimental/advanced).
+* AR overlay mode for mobile devices.
+
+## Development Milestones
+
+1. Basic globe + satellite points using sample TLEs (satellite.js).
+2. Selection + info panel + time controls.
+3. Real-time TLE fetcher & WebSocket sync.
+4. Visual polish (atmosphere, clouds, trails, HUD).
+5. Scalability/LOD and final UX polish.
+
+optimize it for good performance
+
+---
+
+
